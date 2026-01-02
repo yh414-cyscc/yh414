@@ -2,37 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>yh414 flowers</title>
+  <title>Flower Grow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: black;
+      background: #0e0e0e;
       height: 100%;
       touch-action: none;
-      font-family: serif;
+      font-family: Arial, sans-serif;
     }
+
     canvas {
       display: block;
     }
-    .center-text {
+
+    .hint {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: white;
-      font-size: 28px;
+      color: #ffffffcc;
+      font-size: 22px;
       letter-spacing: 1px;
       pointer-events: none;
-      opacity: 0.85;
+      user-select: none;
     }
   </style>
 </head>
 <body>
 
-<div class="center-text">Click to have a flower</div>
+<div class="hint">Click to have a flower</div>
 <canvas id="canvas"></canvas>
 
 <script>
@@ -46,66 +49,106 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-function drawFlower(x) {
-  const baseY = canvas.height + 20;
-  const height = 100 + Math.random() * 120;
-  const sway = (Math.random() - 0.5) * 40;
-  const petals = 6 + Math.floor(Math.random() * 4);
-  const hue = Math.random() * 360;
+const flowers = [];
 
-  let progress = 0;
+// Flower class
+class Flower {
+  constructor(x) {
+    this.x = x;
+    this.baseY = canvas.height + 40;
+    this.height = 0;
+    this.maxHeight = 120 + Math.random() * 80;
+    this.growSpeed = 2 + Math.random();
+    this.bloom = 0;
+    this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+  }
 
-  function grow() {
-    progress += 0.02;
-    if (progress > 1) progress = 1;
-
-    const y = baseY - height * progress;
-    const cx = x + sway * progress;
-
-    // stem
-    ctx.strokeStyle = "rgba(100,200,120,0.8)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, baseY);
-    ctx.lineTo(cx, y);
-    ctx.stroke();
-
-    // flower
-    if (progress > 0.9) {
-      ctx.save();
-      ctx.translate(cx, y);
-      for (let i = 0; i < petals; i++) {
-        ctx.rotate((Math.PI * 2) / petals);
-        ctx.beginPath();
-        ctx.fillStyle = `hsl(${hue},80%,65%)`;
-        ctx.ellipse(12, 0, 14, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    if (progress < 1) {
-      requestAnimationFrame(grow);
+  update() {
+    if (this.height < this.maxHeight) {
+      this.height += this.growSpeed;
+    } else if (this.bloom < 1) {
+      this.bloom += 0.03;
     }
   }
-  grow();
+
+  drawStem() {
+    ctx.strokeStyle = "#2ecc71";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.baseY);
+    ctx.lineTo(this.x, this.baseY - this.height);
+    ctx.stroke();
+  }
+
+  drawLeaves() {
+    ctx.fillStyle = "#27ae60";
+    ctx.beginPath();
+    ctx.ellipse(this.x - 12, this.baseY - this.height / 2, 10, 5, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(this.x + 12, this.baseY - this.height / 1.5, 10, 5, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawFlower() {
+    const y = this.baseY - this.height;
+    const petals = 8;
+    const radius = 20 * this.bloom;
+
+    ctx.save();
+    ctx.translate(this.x, y);
+
+    for (let i = 0; i < petals; i++) {
+      ctx.rotate((Math.PI * 2) / petals);
+      ctx.beginPath();
+      ctx.fillStyle = this.color;
+      ctx.ellipse(0, -radius, 10, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.fillStyle = "#f1c40f";
+    ctx.arc(0, 0, 6 * this.bloom, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  draw() {
+    this.drawStem();
+    this.drawLeaves();
+    if (this.bloom > 0) this.drawFlower();
+  }
 }
 
-function handle(x) {
-  drawFlower(x);
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (const flower of flowers) {
+    flower.update();
+    flower.draw();
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+function plantFlower(x) {
+  flowers.push(new Flower(x));
+  document.querySelector(".hint").style.display = "none";
 }
 
-// touch
+// Touch
 canvas.addEventListener("touchstart", e => {
   e.preventDefault();
-  for (let t of e.touches) {
-    handle(t.clientX);
-  }
+  const t = e.touches[0];
+  plantFlower(t.clientX);
 });
 
-// mouse
+// Mouse
 canvas.addEventListener("mousedown", e => {
-  handle(e.clientX);
+  plantFlower(e.clientX);
 });
 </script>
 
