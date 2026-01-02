@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>yh414 flowers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+      height: 100%;
+      touch-action: none;
+      font-family: serif;
+    }
+    canvas {
+      display: block;
+    }
+    .center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 28px;
+      letter-spacing: 1px;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+<div class="center-text">Click to have a flower</div>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+function drawFlower(x) {
+  const baseY = canvas.height + 20;
+  const height = 100 + Math.random() * 120;
+  const sway = (Math.random() - 0.5) * 40;
+  const petals = 6 + Math.floor(Math.random() * 4);
+  const hue = Math.random() * 360;
+
+  let progress = 0;
+
+  function grow() {
+    progress += 0.02;
+    if (progress > 1) progress = 1;
+
+    const y = baseY - height * progress;
+    const cx = x + sway * progress;
+
+    // stem
+    ctx.strokeStyle = "rgba(100,200,120,0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(cx, y);
+    ctx.stroke();
+
+    // flower
+    if (progress > 0.9) {
+      ctx.save();
+      ctx.translate(cx, y);
+      for (let i = 0; i < petals; i++) {
+        ctx.rotate((Math.PI * 2) / petals);
+        ctx.beginPath();
+        ctx.fillStyle = `hsl(${hue},80%,65%)`;
+        ctx.ellipse(12, 0, 14, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(grow);
+    }
+  }
+  grow();
+}
+
+function handle(x) {
+  drawFlower(x);
+}
+
+// touch
+canvas.addEventListener("touchstart", e => {
+  e.preventDefault();
+  for (let t of e.touches) {
+    handle(t.clientX);
+  }
+});
+
+// mouse
+canvas.addEventListener("mousedown", e => {
+  handle(e.clientX);
+});
+</script>
+
+</body>
+</html>
