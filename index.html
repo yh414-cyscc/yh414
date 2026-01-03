@@ -11,7 +11,6 @@ html, body {
     background: black;
     overflow: hidden;
     height: 100%;
-    touch-action: manipulation;
 }
 canvas { display: block; }
 #hint {
@@ -45,78 +44,64 @@ function resize() {
 resize();
 addEventListener("resize", resize);
 
-const easeInOut = t =>
+const ease = t =>
     t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 class Flower {
     constructor(x, y) {
         this.x = x;
         this.baseY = y;
-        this.height = 140 + Math.random() * 220;
+        this.height = 150 + Math.random() * 220;
         this.t = 0;
         this.speed = 0.006 + Math.random() * 0.004;
-        this.curve = (Math.random() - 0.5) * 6;
-
+        this.curve = (Math.random() - 0.5) * 5;
         this.type = ["rose", "chrysanthemum", "sakura", "lavender"]
             [Math.floor(Math.random() * 4)];
     }
 
-    drawStem(p) {
+    stem(p) {
         ctx.strokeStyle = "#2f6f4e";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(this.x, this.baseY);
-
         for (let i = 0; i <= 30; i++) {
-            const k = i / 30 * p;
-            const sway = Math.sin(k * Math.PI) * this.curve;
+            const k = (i / 30) * p;
             ctx.lineTo(
-                this.x + sway,
+                this.x + Math.sin(k * Math.PI) * this.curve,
                 this.baseY - this.height * k
             );
         }
         ctx.stroke();
     }
 
-    drawLeaves(p) {
+    leaves(p) {
         if (p < 0.4) return;
         ctx.fillStyle = "#3f8f66";
-
-        const positions = [0.45, 0.6, 0.72];
-        positions.forEach((pos, i) => {
+        [0.45, 0.6, 0.72].forEach((pos, i) => {
             if (p > pos) {
                 const y = this.baseY - this.height * pos * p;
-                const dir = i % 2 === 0 ? -1 : 1;
+                const dir = i % 2 ? 1 : -1;
                 ctx.beginPath();
-                ctx.ellipse(
-                    this.x + dir * 10,
-                    y,
-                    16,
-                    7,
-                    dir * 0.6,
-                    0,
-                    Math.PI * 2
-                );
+                ctx.ellipse(this.x + dir * 11, y, 15, 7, dir * 0.6, 0, Math.PI * 2);
                 ctx.fill();
             }
         });
     }
 
-    drawBloom(top, bloom) {
+    bloom(top, b) {
         ctx.save();
-        ctx.globalAlpha = bloom;
+        ctx.globalAlpha = b;
 
         if (this.type === "rose") {
-            const layers = 3;
-            for (let l = layers; l >= 1; l--) {
-                ctx.fillStyle = "#b11226";
-                for (let i = 0; i < 6 + l; i++) {
+            for (let layer = 3; layer >= 1; layer--) {
+                ctx.fillStyle = layer === 1 ? "#7a0d1b" : "#b11226";
+                for (let i = 0; i < 7 + layer; i++) {
                     ctx.beginPath();
                     ctx.ellipse(
-                        this.x + Math.cos(i) * 8 * l * bloom,
-                        top + Math.sin(i) * 8 * l * bloom,
-                        10 * bloom,
-                        14 * bloom,
+                        this.x + Math.cos(i) * 6 * layer * b,
+                        top + Math.sin(i) * 6 * layer * b,
+                        10 * b,
+                        14 * b,
                         i,
                         0,
                         Math.PI * 2
@@ -128,14 +113,15 @@ class Flower {
 
         if (this.type === "chrysanthemum") {
             ctx.fillStyle = "#f4c430";
-            for (let i = 0; i < 32; i++) {
+            for (let i = 0; i < 26; i++) {
+                const r = 16 + Math.random() * 4;
                 ctx.beginPath();
                 ctx.ellipse(
-                    this.x + Math.cos(i) * 22 * bloom,
-                    top + Math.sin(i) * 22 * bloom,
-                    5 * bloom,
-                    14 * bloom,
-                    i,
+                    this.x + Math.cos(i) * r * b,
+                    top + Math.sin(i) * r * b,
+                    6 * b,
+                    13 * b,
+                    i * 0.8,
                     0,
                     Math.PI * 2
                 );
@@ -148,10 +134,10 @@ class Flower {
             for (let i = 0; i < 5; i++) {
                 ctx.beginPath();
                 ctx.ellipse(
-                    this.x + Math.cos(i * 1.2) * 10 * bloom,
-                    top + Math.sin(i * 1.2) * 10 * bloom,
-                    12 * bloom,
-                    18 * bloom,
+                    this.x + Math.cos(i * 1.2) * 10 * b,
+                    top + Math.sin(i * 1.2) * 10 * b,
+                    12 * b,
+                    18 * b,
                     i,
                     0,
                     Math.PI * 2
@@ -161,14 +147,14 @@ class Flower {
         }
 
         if (this.type === "lavender") {
-            ctx.fillStyle = "#7c5aa6";
             for (let i = 0; i < 12; i++) {
+                ctx.fillStyle = i % 2 ? "#9a6fd6" : "#7c5aa6";
                 ctx.beginPath();
                 ctx.ellipse(
                     this.x,
-                    top - i * 8 * bloom,
-                    5 * bloom,
-                    10 * bloom,
+                    top - i * 8 * b,
+                    5 * b,
+                    10 * b,
                     0,
                     0,
                     Math.PI * 2
@@ -181,19 +167,13 @@ class Flower {
     }
 
     update() {
-        this.t += this.speed;
-        if (this.t > 1) this.t = 1;
-
-        const p = easeInOut(this.t);
+        this.t = Math.min(1, this.t + this.speed);
+        const p = ease(this.t);
         const top = this.baseY - this.height * p;
 
-        this.drawStem(p);
-        this.drawLeaves(p);
-
-        if (p > 0.65) {
-            const bloom = (p - 0.65) / 0.35;
-            this.drawBloom(top, bloom);
-        }
+        this.stem(p);
+        this.leaves(p);
+        if (p > 0.65) this.bloom(top, (p - 0.65) / 0.35);
     }
 }
 
@@ -206,15 +186,9 @@ function animate() {
 }
 animate();
 
-function plant(x, y) {
+canvas.addEventListener("pointerdown", e => {
     hint.style.opacity = 0;
-    flowers.push(new Flower(x, y));
-}
-
-canvas.addEventListener("click", e => plant(e.clientX, e.clientY));
-canvas.addEventListener("touchstart", e => {
-    const t = e.touches[0];
-    plant(t.clientX, t.clientY);
+    flowers.push(new Flower(e.clientX, e.clientY));
 });
 </script>
 
