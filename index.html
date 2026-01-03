@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flower Growth Website</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: black;
+            overflow: hidden;
+        }
+        #canvas {
+            display: block;
+        }
+        #text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="text">click to have a flower</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let flowers = [];
+
+        canvas.addEventListener('click', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            // Hide text after first click
+            document.getElementById('text').style.display = 'none';
+            // Create flower with random two colors
+            const flower = {
+                x: x,
+                y: y,
+                growth: 0, // 0 to 1
+                color1: randomColor(), // For stem
+                color2: randomColor()  // For petals
+            };
+            flowers.push(flower);
+            animateFlower(flower);
+        });
+
+        function randomColor() {
+            return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        }
+
+        function animateFlower(flower) {
+            const animate = () => {
+                flower.growth += 0.05; // Quick growth
+                if (flower.growth >= 1) flower.growth = 1;
+                drawFlower(flower);
+                if (flower.growth < 1) requestAnimationFrame(animate);
+            };
+            animate();
+        }
+
+        function drawFlower(flower) {
+            ctx.save();
+            ctx.translate(flower.x, flower.y);
+            // Draw stem (grows from bottom up)
+            ctx.strokeStyle = flower.color1;
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -100 * flower.growth);
+            ctx.stroke();
+            // Draw petals (bloom after stem is halfway)
+            if (flower.growth > 0.5) {
+                const petalGrowth = (flower.growth - 0.5) / 0.5;
+                ctx.fillStyle = flower.color2;
+                // Tulip-like petals: 6 oval shapes arranged in a circle
+                for (let i = 0; i < 6; i++) {
+                    ctx.save();
+                    ctx.rotate(i * Math.PI / 3);
+                    ctx.beginPath();
+                    ctx.ellipse(0, -120, 20 * petalGrowth, 40 * petalGrowth, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            ctx.restore();
+        }
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Redraw all flowers
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            flowers.forEach(flower => drawFlower(flower));
+        });
+    </script>
+</body>
+</html>
