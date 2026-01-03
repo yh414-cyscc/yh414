@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Click to Have a Flower</title>
+<title>Flower</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 html, body {
@@ -22,15 +22,15 @@ canvas { display: block; }
     color: white;
     font-family: Arial, sans-serif;
     font-size: 24px;
-    opacity: 0.85;
+    opacity: 0.9;
     pointer-events: none;
-    transition: opacity 0.6s ease;
+    transition: opacity 0.8s ease;
 }
 </style>
 </head>
 <body>
 
-<div id="hint">click to have a flower</div>
+<div id="hint">click here to get a flower &lt;3</div>
 <canvas id="canvas"></canvas>
 
 <script>
@@ -45,81 +45,95 @@ function resize() {
 resize();
 addEventListener("resize", resize);
 
-const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeInOut = t =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 class Flower {
     constructor(x, y) {
         this.x = x;
         this.baseY = y;
-        this.height = 160 + Math.random() * 180;
+        this.height = 140 + Math.random() * 220;
         this.t = 0;
-        this.speed = 0.012 + Math.random() * 0.01;
-        this.sway = Math.random() * 2 + 1;
+        this.speed = 0.006 + Math.random() * 0.004;
+        this.curve = (Math.random() - 0.5) * 6;
 
         this.type = ["rose", "chrysanthemum", "sakura", "lavender"]
             [Math.floor(Math.random() * 4)];
     }
 
-    stemPath(progress) {
+    drawStem(p) {
+        ctx.strokeStyle = "#2f6f4e";
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(this.x, this.baseY);
-        for (let i = 0; i <= 20; i++) {
-            const p = i / 20 * progress;
-            const sway = Math.sin(p * Math.PI) * this.sway;
+
+        for (let i = 0; i <= 30; i++) {
+            const k = i / 30 * p;
+            const sway = Math.sin(k * Math.PI) * this.curve;
             ctx.lineTo(
                 this.x + sway,
-                this.baseY - this.height * p
+                this.baseY - this.height * k
             );
         }
         ctx.stroke();
     }
 
-    drawLeaves(progress) {
-        if (progress < 0.35) return;
+    drawLeaves(p) {
+        if (p < 0.4) return;
         ctx.fillStyle = "#3f8f66";
-        const y1 = this.baseY - this.height * 0.45 * progress;
-        const y2 = this.baseY - this.height * 0.65 * progress;
 
-        ctx.beginPath();
-        ctx.ellipse(this.x - 10, y1, 14, 6, -0.6, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.ellipse(this.x + 10, y2, 14, 6, 0.6, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    drawBloom(top, bloom) {
-        ctx.save();
-        ctx.globalAlpha = bloom;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "rgba(255,255,255,0.2)";
-
-        if (this.type === "rose") {
-            ctx.fillStyle = "#b11226";
-            for (let i = 0; i < 8; i++) {
+        const positions = [0.45, 0.6, 0.72];
+        positions.forEach((pos, i) => {
+            if (p > pos) {
+                const y = this.baseY - this.height * pos * p;
+                const dir = i % 2 === 0 ? -1 : 1;
                 ctx.beginPath();
                 ctx.ellipse(
-                    this.x + Math.cos(i) * 12 * bloom,
-                    top + Math.sin(i) * 12 * bloom,
-                    14 * bloom,
-                    18 * bloom,
-                    i,
+                    this.x + dir * 10,
+                    y,
+                    16,
+                    7,
+                    dir * 0.6,
                     0,
                     Math.PI * 2
                 );
                 ctx.fill();
             }
+        });
+    }
+
+    drawBloom(top, bloom) {
+        ctx.save();
+        ctx.globalAlpha = bloom;
+
+        if (this.type === "rose") {
+            const layers = 3;
+            for (let l = layers; l >= 1; l--) {
+                ctx.fillStyle = "#b11226";
+                for (let i = 0; i < 6 + l; i++) {
+                    ctx.beginPath();
+                    ctx.ellipse(
+                        this.x + Math.cos(i) * 8 * l * bloom,
+                        top + Math.sin(i) * 8 * l * bloom,
+                        10 * bloom,
+                        14 * bloom,
+                        i,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            }
         }
 
         if (this.type === "chrysanthemum") {
             ctx.fillStyle = "#f4c430";
-            for (let i = 0; i < 24; i++) {
+            for (let i = 0; i < 32; i++) {
                 ctx.beginPath();
                 ctx.ellipse(
-                    this.x + Math.cos(i) * 18 * bloom,
-                    top + Math.sin(i) * 18 * bloom,
-                    6 * bloom,
+                    this.x + Math.cos(i) * 22 * bloom,
+                    top + Math.sin(i) * 22 * bloom,
+                    5 * bloom,
                     14 * bloom,
                     i,
                     0,
@@ -137,7 +151,7 @@ class Flower {
                     this.x + Math.cos(i * 1.2) * 10 * bloom,
                     top + Math.sin(i * 1.2) * 10 * bloom,
                     12 * bloom,
-                    16 * bloom,
+                    18 * bloom,
                     i,
                     0,
                     Math.PI * 2
@@ -148,13 +162,13 @@ class Flower {
 
         if (this.type === "lavender") {
             ctx.fillStyle = "#7c5aa6";
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 12; i++) {
                 ctx.beginPath();
                 ctx.ellipse(
                     this.x,
                     top - i * 8 * bloom,
-                    6 * bloom,
-                    12 * bloom,
+                    5 * bloom,
+                    10 * bloom,
                     0,
                     0,
                     Math.PI * 2
@@ -170,16 +184,14 @@ class Flower {
         this.t += this.speed;
         if (this.t > 1) this.t = 1;
 
-        const p = easeOut(this.t);
+        const p = easeInOut(this.t);
         const top = this.baseY - this.height * p;
 
-        ctx.strokeStyle = "#2f6f4e";
-        ctx.lineWidth = 3;
-        this.stemPath(p);
+        this.drawStem(p);
         this.drawLeaves(p);
 
-        if (p > 0.6) {
-            const bloom = (p - 0.6) / 0.4;
+        if (p > 0.65) {
+            const bloom = (p - 0.65) / 0.35;
             this.drawBloom(top, bloom);
         }
     }
