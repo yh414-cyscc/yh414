@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Click to Have a Flower</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: black;
+        overflow: hidden;
+        height: 100%;
+        touch-action: manipulation;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    #hint {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+        opacity: 0.8;
+        pointer-events: none;
+        transition: opacity 0.5s;
+    }
+</style>
+</head>
+<body>
+
+<div id="hint">click to have a flower</div>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const hint = document.getElementById("hint");
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+const colorPairs = [
+    ["#ff4d6d", "#ffb3c1"],
+    ["#ff7a00", "#ffd166"],
+    ["#c77dff", "#9d4edd"],
+    ["#ff006e", "#ffbe0b"],
+    ["#f72585", "#b5179e"],
+    ["#ff9f1c", "#e36414"]
+];
+
+class Tulip {
+    constructor(x, y) {
+        this.x = x;
+        this.baseY = y;
+        this.height = 120 + Math.random() * 140;
+        this.growth = 0;
+        this.speed = 0.08 + Math.random() * 0.05;
+
+        const pair = colorPairs[Math.floor(Math.random() * colorPairs.length)];
+        this.petalColor1 = pair[0];
+        this.petalColor2 = pair[1];
+    }
+
+    draw() {
+        this.growth += this.speed;
+        if (this.growth > 1) this.growth = 1;
+
+        const currentHeight = this.height * this.growth;
+        const stemTop = this.baseY - currentHeight;
+
+        // Stem
+        ctx.strokeStyle = "#2d6a4f";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.baseY);
+        ctx.lineTo(this.x, stemTop);
+        ctx.stroke();
+
+        // Tulip petals
+        if (this.growth > 0.6) {
+            const bloom = (this.growth - 0.6) / 0.4;
+            const size = 18 + bloom * 14;
+
+            ctx.fillStyle = this.petalColor1;
+            ctx.beginPath();
+            ctx.ellipse(this.x - size / 2, stemTop, size, size * 1.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = this.petalColor2;
+            ctx.beginPath();
+            ctx.ellipse(this.x + size / 2, stemTop, size, size * 1.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = this.petalColor1;
+            ctx.beginPath();
+            ctx.ellipse(this.x, stemTop - size * 0.2, size * 0.9, size * 1.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+}
+
+const tulips = [];
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    tulips.forEach(t => t.draw());
+    requestAnimationFrame(animate);
+}
+animate();
+
+function plantFlower(x, y) {
+    hint.style.opacity = 0;
+    tulips.push(new Tulip(x, y));
+}
+
+canvas.addEventListener("click", e => {
+    plantFlower(e.clientX, e.clientY);
+});
+
+canvas.addEventListener("touchstart", e => {
+    const t = e.touches[0];
+    plantFlower(t.clientX, t.clientY);
+});
+</script>
+
+</body>
+</html>
