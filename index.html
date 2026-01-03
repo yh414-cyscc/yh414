@@ -51,12 +51,13 @@ class Flower {
     constructor(x, y) {
         this.x = x;
         this.baseY = y;
-        this.height = 150 + Math.random() * 220;
+        this.height = 160 + Math.random() * 220;
         this.t = 0;
         this.speed = 0.006 + Math.random() * 0.004;
         this.curve = (Math.random() - 0.5) * 5;
-        this.type = ["rose", "chrysanthemum", "sakura", "lavender"]
-            [Math.floor(Math.random() * 4)];
+
+        this.type = ["rose", "sakura", "lavender"]
+            [Math.floor(Math.random() * 3)];
     }
 
     stem(p) {
@@ -93,6 +94,9 @@ class Flower {
         ctx.globalAlpha = b;
 
         if (this.type === "rose") {
+            ctx.shadowColor = "#b11226";
+            ctx.shadowBlur = 20;
+
             for (let layer = 3; layer >= 1; layer--) {
                 ctx.fillStyle = layer === 1 ? "#7a0d1b" : "#b11226";
                 for (let i = 0; i < 7 + layer; i++) {
@@ -111,26 +115,11 @@ class Flower {
             }
         }
 
-        if (this.type === "chrysanthemum") {
-            ctx.fillStyle = "#f4c430";
-            for (let i = 0; i < 26; i++) {
-                const r = 16 + Math.random() * 4;
-                ctx.beginPath();
-                ctx.ellipse(
-                    this.x + Math.cos(i) * r * b,
-                    top + Math.sin(i) * r * b,
-                    6 * b,
-                    13 * b,
-                    i * 0.8,
-                    0,
-                    Math.PI * 2
-                );
-                ctx.fill();
-            }
-        }
-
         if (this.type === "sakura") {
+            ctx.shadowColor = "#f6b3c8";
+            ctx.shadowBlur = 18;
             ctx.fillStyle = "#f6b3c8";
+
             for (let i = 0; i < 5; i++) {
                 ctx.beginPath();
                 ctx.ellipse(
@@ -147,14 +136,17 @@ class Flower {
         }
 
         if (this.type === "lavender") {
-            for (let i = 0; i < 12; i++) {
-                ctx.fillStyle = i % 2 ? "#9a6fd6" : "#7c5aa6";
+            ctx.shadowColor = "#a678ff";
+            ctx.shadowBlur = 16;
+
+            for (let i = 0; i < 14; i++) {
+                ctx.fillStyle = i % 2 ? "#b58cff" : "#9a6fd6";
                 ctx.beginPath();
                 ctx.ellipse(
                     this.x,
-                    top - i * 8 * b,
-                    5 * b,
-                    10 * b,
+                    top - i * 6 * b,
+                    3.5 * b,
+                    7 * b,
                     0,
                     0,
                     Math.PI * 2
@@ -173,6 +165,7 @@ class Flower {
 
         this.stem(p);
         this.leaves(p);
+
         if (p > 0.65) this.bloom(top, (p - 0.65) / 0.35);
     }
 }
